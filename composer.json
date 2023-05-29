@@ -53,5 +53,5 @@
     },
     "minimum-stability": "stable",
     "prefer-stable": true,
-    "bin": ["builds/scormer"]
+    "bin": ["builds/scorm"]
 }

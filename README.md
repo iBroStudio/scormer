@@ -14,7 +14,7 @@ It supports the following SCORM versions :
 ## Installation
 
 ```bash
-composer global require scormer
+composer global require ibrostudio/scormer
 ```
 
 ## Usage
