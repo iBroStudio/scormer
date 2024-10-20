@@ -2,7 +2,8 @@
 
 namespace App\Actions;
 
-use App\Contracts\ScormConfig;
+use App\Data\ScormConfigData;
+use App\Data\ScormConfigWithMetadataData;
 use Exception;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -11,7 +12,7 @@ use ZipArchive;
 
 class BuildArchive
 {
-    public static function execute(ScormConfig $config): void
+    public static function execute(ScormConfigData|ScormConfigWithMetadataData $config): void
     {
         $archive = Str::of($config->destination)
             ->append(DIRECTORY_SEPARATOR)
@@ -27,7 +28,7 @@ class BuildArchive
             )
             ->value();
 
-        $zip = new ZipArchive();
+        $zip = new ZipArchive;
 
         throw_if(
             $zip->open($archive, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true,

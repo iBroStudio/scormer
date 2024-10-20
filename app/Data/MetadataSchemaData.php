@@ -12,6 +12,5 @@ class MetadataSchemaData extends Data
         public string $catalogValue,
         public string $lifeCycleVersion,
         public string $classification
-    ) {
-    }
+    ) {}
 }

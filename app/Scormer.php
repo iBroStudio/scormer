@@ -4,12 +4,14 @@ namespace App;
 
 use App\Actions\BuildArchive;
 use App\Actions\BuildManifest;
-use App\Contracts\ScormConfig;
 use App\Contracts\ScormSchemaManager;
 use App\Data\MetadataSchemaData;
+use App\Data\ScormConfigData;
+use App\Data\ScormConfigWithMetadataData;
 use App\Data\ScormSchemaData;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
+use Symfony\Component\DomCrawler\Crawler;
 
 class Scormer
 {
@@ -20,15 +22,15 @@ class Scormer
     const DIRECTORY_FOR_DEFINITION_FILES = 'definitionFiles';
 
     public function __construct(
-        public ScormConfig $config,
+        public ScormConfigData|ScormConfigWithMetadataData $config,
         public ScormSchemaManager $scormSchemaManager
-    ) {
-    }
+    ) {}
 
     public function generate(): void
     {
         File::ensureDirectoryExists($this->config->destination);
 
+        $this->transformPaths();
         $this->createManifestFile();
         $this->copyDefinitionFiles();
         $this->createMetadataFile();
@@ -38,7 +40,60 @@ class Scormer
         $this->cleanSource();
     }
 
-    private function createManifestFile()
+    private function transformPaths(): void
+    {
+        $files = File::allFiles($this->config->source);
+
+        foreach ($files as $file) {
+            if ($file->getExtension() === 'js') {
+                $content = Str::replace(
+                    search: [
+                        'window.location.href=new URL(i,window.location.href).href',
+                        'src:["/',
+                    ],
+                    replace: [
+                        'window.location.href=new URL(i,window.location.href).href+"/index.html"',
+                        'src:["../',
+                    ],
+                    subject: File::get($file->getRealPath())
+                );
+
+                $content = Str::replaceMatches('/href:([a-z]{1}),/', function (array $matches) {
+                    return "href:'./'+{$matches[1]}+'/index.html',";
+                }, $content);
+
+                File::put($file->getRealPath(), $content);
+            }
+
+            if ($file->getExtension() === 'html') {
+                $content = Str::replace(
+                    search: ['src&#34;:&#34;/', '&quot;/_astro'],
+                    replace: ['src&#34;:&#34;./', '&quot;../_astro'],
+                    subject: File::get($file->getRealPath())
+                );
+
+                $dom = new Crawler($content);
+
+                $items = array_unique($dom
+                    ->filter('a')
+                    ->each(function (Crawler $node): string {
+                        return $node->attr('href');
+                    }));
+
+                foreach ($items as $item) {
+                    $content = Str::replace(
+                        search: $item,
+                        replace: $item.'index.html',
+                        subject: $content
+                    );
+                }
+
+                File::put($file->getRealPath(), $content);
+            }
+        }
+    }
+
+    private function createManifestFile(): void
     {
         $schema = $this->scormSchemaManager
             ->getSchema(
@@ -59,7 +114,7 @@ class Scormer
         );
     }
 
-    private function copyDefinitionFiles()
+    private function copyDefinitionFiles(): void
     {
         File::copyDirectory(
             directory: realpath(
@@ -81,7 +136,7 @@ class Scormer
         );
     }
 
-    private function createMetadataFile()
+    private function createMetadataFile(): void
     {
         if (method_exists($this->scormSchemaManager, 'getMetadataSchema')) {
             $schema = $this->scormSchemaManager
@@ -102,7 +157,7 @@ class Scormer
         }
     }
 
-    private function cleanSource()
+    private function cleanSource(): void
     {
         File::delete(
             Str::of($this->config->source)

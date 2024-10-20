@@ -4,7 +4,6 @@ namespace App\Enums;
 
 use App\Data\ScormConfigData;
 use App\Data\ScormConfigWithMetadataData;
-use App\Exceptions\UnsupportedVersionException;
 
 enum ScormVersions: string
 {
@@ -26,7 +25,6 @@ enum ScormVersions: string
         return match ($this) {
             self::SCORM_1_2, self::SCORM_2004_3 => ScormConfigData::class,
             self::SCORM_2004_4 => ScormConfigWithMetadataData::class,
-            default => throw new UnsupportedVersionException('UnsupportedVersionException'),
         };
     }
 
@@ -36,7 +34,6 @@ enum ScormVersions: string
             self::SCORM_1_2 => 'scorm12',
             self::SCORM_2004_3 => 'scorm2004Ed3',
             self::SCORM_2004_4 => 'scorm2004Ed4',
-            default => throw new UnsupportedVersionException('UnsupportedVersionException'),
         };
     }
 }

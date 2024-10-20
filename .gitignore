@@ -4,3 +4,4 @@
 /.vagrant
 .phpunit.result.cache
 composer.lock
+project-test

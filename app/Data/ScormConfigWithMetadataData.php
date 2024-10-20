@@ -23,6 +23,5 @@ class ScormConfigWithMetadataData extends Data implements ScormConfig
         public string $lifeCycleVersion,
         public string $classification,
         public ?string $metadataDescription,
-    ) {
-    }
+    ) {}
 }

@@ -7,7 +7,7 @@ use App\Contracts\ScormSchemaManager;
 use App\Data\ScormSchemaData;
 use App\SchemaManagers\Metadata\Scorm2004Edition4MetadataSchemaManager;
 
-class Scorm2004Edition4SchemaManager extends AbstractScormSchemaManager implements ScormSchemaManager, MetadataSchemaManager
+class Scorm2004Edition4SchemaManager extends AbstractScormSchemaManager implements MetadataSchemaManager, ScormSchemaManager
 {
     use Scorm2004Edition4MetadataSchemaManager;
 

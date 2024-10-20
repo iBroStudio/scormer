@@ -2,10 +2,12 @@
 
 namespace App\Providers;
 
+use App\Data\ScormConfigData;
+use App\Data\ScormConfigWithMetadataData;
 use App\DriverManagers\SchemaDriverManager;
 use App\Scormer;
-use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
+use LaravelZero\Framework\Application;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -16,6 +18,9 @@ class AppServiceProvider extends ServiceProvider
 
     public function register(): void
     {
+        /**
+         * @param  array<string, ScormConfigData|ScormConfigWithMetadataData>  $params
+         */
         $this->app->bind(Scormer::class, function (Application $app, array $params) {
             return new Scormer(
                 config: $params['config'],

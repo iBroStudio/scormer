@@ -2,6 +2,7 @@
 
 namespace App\Contracts;
 
-interface ScormConfig
-{
-}
+/**
+ * @property-read string $destination
+ */
+interface ScormConfig {}

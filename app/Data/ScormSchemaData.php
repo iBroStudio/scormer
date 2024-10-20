@@ -14,6 +14,5 @@ class ScormSchemaData extends Data
         public string $startingPage,
         public string $pathToDirectory,
         public ?string $metadataDescription
-    ) {
-    }
+    ) {}
 }

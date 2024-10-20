@@ -3,6 +3,8 @@
 namespace App\Commands;
 
 use App\Contracts\ScormConfig;
+use App\Data\ScormConfigData;
+use App\Data\ScormConfigWithMetadataData;
 use App\Enums\ScormVersions;
 use App\Exceptions\InvalidScormManifestSchemaException;
 use App\Exceptions\UnsupportedVersionException;
@@ -13,135 +15,196 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use LaravelZero\Framework\Commands\Command;
-use function Termwind\{render};
+
+use function Laravel\Prompts\confirm;
+use function Laravel\Prompts\error;
+use function Laravel\Prompts\form;
+use function Laravel\Prompts\info;
+use function Laravel\Prompts\intro;
+use function Laravel\Prompts\text;
 
 class GenerateCommand extends Command
 {
-    protected $signature = 'generate {name=Artisan}';
+    protected $signature = 'generate';
 
     protected $description = 'Generate a scorm package from a static html/js site';
 
+    protected $workingDirectory;
+
     public function handle(): int
     {
-        $this->hero('SCORMER', 'a SCORM package generator by iBroStudio');
+        intro('SCORMER by iBroStudio');
+
+        $this->workingDirectory = getcwd().(config('app.env') === 'testing' ? '/project-test' : '');
 
         $config = $this->loadConfig();
 
-        if ($config instanceof ScormConfig) {
+        if ($config instanceof ScormConfigData || $config instanceof ScormConfigWithMetadataData) {
             try {
                 $scormer = App::makeWith(Scormer::class, ['config' => $config]);
 
                 $scormer->generate();
 
-                $this->success('SCORM package successfully generated!');
+                info('SCORM package successfully generated!');
 
                 if (! $this->hasConfigFile()
-                    && $this->confirm(question: 'Save configuration?', default: true)
+                    && confirm('Save configuration?')
                 ) {
                     $this->saveConfig($config);
                 }
 
             } catch (InvalidScormManifestSchemaException|UnsupportedVersionException $e) {
-                $this->error($e->getMessage());
+                error($e->getMessage());
             }
         }
 
         return Command::SUCCESS;
     }
 
-    private function loadConfig(): ScormConfig|null
+    private function loadConfig(): ?ScormConfig
     {
         if ($this->hasConfigFile()) {
-            $config = Dotenv::parse(File::get(getcwd().'/.scorm'));
+            $config = Dotenv::parse(File::get($this->workingDirectory.'/.scorm'));
 
             $configDataClass = ScormVersions::from($config['version'])->getConfigDataClass();
 
-            return $configDataClass::from(Dotenv::parse(File::get(getcwd().'/.scorm')));
+            return $configDataClass::from($config);
         }
 
-        $config = [
-            'version' => $this->choice(
-                question: 'Version of SCORM package',
-                choices: ScormVersions::options(),
+        $config = form()
+            ->select(
+                label: 'Version of SCORM package',
+                options: ScormVersions::options(),
                 default: '1.2',
-                attempts: null,
-                multiple: false
-            ),
-            'organization' => $organization = Str::squish($this->ask('Name of organization')),
-            'title' => $title = Str::squish($this->ask('Title of course')),
-            'identifier' => $identifier = Str::squish(
-                $this->ask(
-                    question: 'Course identifier',
-                    default: Str::of($organization)
-                        ->append('-')
-                        ->append($title)
-                        ->slug()
-                        ->value()
-                )
-            ),
-            'source' => Str::squish(
-                $this->ask(question: 'Source directory')
-            ),
-            'destination' => Str::squish(
-                $this->ask(
-                    question: 'Path to directory where course package will be placed',
-                    default: 'scorm'
-                )
-            ),
-            'masteryScore' => Str::squish(
-                $this->ask(
-                    question: 'Score for course passing',
-                    default: 80
-                )
-            ),
-            'startingPage' => Str::squish(
-                $this->ask(
-                    question: 'Page that will open on course start',
-                    default: 'index.html'
-                )
-            ),
-            'packageName' => Str::squish(
-                $this->ask(
-                    question: 'Package filename',
-                    default: Str::of($identifier)
-                        ->replace('-', '_')
-                        ->append('.zip')
-                        ->value()
-                )
-            ),
-            'metadataDescription' => Str::squish(
-                $this->ask(
-                    question: 'Metadata description'
-                )
-            ),
+                name: 'version'
+            )
 
-        ];
+            ->text(
+                label: 'Name of organization',
+                required: true,
+                name: 'organization'
+            )
+
+            ->text(
+                label: 'Title of course',
+                required: true,
+                name: 'title'
+            )
+
+            ->add(
+                function ($responses) {
+                    return text(
+                        label: 'Course identifier',
+                        default: Str::of($responses['organization'])
+                            ->append('-')
+                            ->append($responses['title'])
+                            ->slug()
+                            ->toString(),
+                        required: true
+                    );
+                },
+                name: 'identifier'
+            )
+
+            ->text(
+                label: 'Source directory',
+                required: true,
+                name: 'source'
+            )
+
+            ->text(
+                label: 'Path to directory where course package will be placed',
+                default: 'scorm',
+                required: true,
+                name: 'destination'
+            )
+
+            ->text(
+                label: 'Score for course passing',
+                default: '80',
+                required: true,
+                name: 'masteryScore'
+            )
+
+            ->text(
+                label: 'Page that will open on course start',
+                default: 'index.html',
+                required: true,
+                name: 'startingPage'
+            )
+
+            ->add(
+                function ($responses) {
+                    return text(
+                        label: 'Package filename',
+                        default: Str::of($responses['identifier'])
+                            ->replace('-', '_')
+                            ->append('.zip')
+                            ->toString(),
+                        required: true
+                    );
+                },
+                name: 'packageName'
+            )
+
+            ->text(
+                label: 'Metadata description',
+                name: 'metadataDescription'
+            )
+
+            ->submit();
 
         $configDataClass = ScormVersions::from($config['version'])->getConfigDataClass();
 
         if (Arr::has(get_class_vars($configDataClass), 'entryIdentifier')) {
-            $config = [
-                ...$config,
-                'entryIdentifier' => $this->ask('Metadata entry identifier', 1),
-                'catalogValue' => $this->ask('Metadata catalog value', 'Catalog'),
-                'lifeCycleVersion' => $this->ask('LifeCycle version of Metadata', 1),
-                'classification' => $this->ask('Metadata classification', 'educational objective'),
-            ];
+
+            $additionnal_config = form()
+                ->text(
+                    label: 'Metadata entry identifier',
+                    default: '1',
+                    required: true,
+                    name: 'entryIdentifier'
+                )
+
+                ->text(
+                    label: 'Metadata catalog value',
+                    default: 'Catalog',
+                    required: true,
+                    name: 'catalogValue'
+                )
+
+                ->text(
+                    label: 'LifeCycle version of Metadata',
+                    default: '1',
+                    required: true,
+                    name: 'lifeCycleVersion'
+                )
+
+                ->text(
+                    label: 'Metadata classification',
+                    default: 'educational objective',
+                    required: true,
+                    name: 'classification'
+                )
+
+                ->submit();
+
+            $config = array_merge($config, $additionnal_config);
         }
 
         try {
             return $configDataClass::from($config);
         } catch (\TypeError $e) {
-            $this->error($e->getMessage());
+            error($e->getMessage());
         }
 
         return null;
     }
 
-    private function saveConfig(ScormConfig $config): void
+    private function saveConfig(ScormConfigData|ScormConfigWithMetadataData $config): void
     {
         if (File::put(
-            path: getcwd().'/.scorm',
+            path: $this->workingDirectory.'/.scorm',
             contents: Arr::join(
                 collect($config->toArray())
                     ->map(fn ($value, $key) => preg_match('/\s/', $value)
@@ -152,33 +215,12 @@ class GenerateCommand extends Command
                 PHP_EOL
             )
         )) {
-            $this->success('Configuration saved in .scorm file');
+            info('Configuration saved in .scorm file');
         }
     }
 
     private function hasConfigFile(): bool
     {
-        return File::exists(getcwd().'/.scorm');
-    }
-
-    private function hero(string $title, string $description = null): void
-    {
-        render(<<<HTML
-            <div class="py-1 ml-2">
-                <div class="px-1 bg-blue-300 text-black">$title</div>
-                <em class="ml-1">
-                  $description
-                </em>
-            </div>
-        HTML);
-    }
-
-    private function success(string $message): void
-    {
-        render(<<<HTML
-            <div class="py-1 ml-2">
-                <div class="px-1 bg-green-300 text-black">$message</div>
-            </div>
-        HTML);
+        return File::exists($this->workingDirectory.'/.scorm');
     }
 }

@@ -19,6 +19,5 @@ class ScormConfigData extends Data implements ScormConfig
         public string $organization,
         public string $packageName,
         public ?string $metadataDescription,
-    ) {
-    }
+    ) {}
 }

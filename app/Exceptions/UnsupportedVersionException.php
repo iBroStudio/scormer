@@ -4,6 +4,4 @@ namespace App\Exceptions;
 
 use Exception;
 
-class UnsupportedVersionException extends Exception
-{
-}
+class UnsupportedVersionException extends Exception {}
