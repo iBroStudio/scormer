@@ -58,6 +58,10 @@ class Scormer
                     subject: File::get($file->getRealPath())
                 );
 
+                $content = Str::replaceMatches('/window\.location\.href=new URL\([a-z]{1},window\.location\.href\)\.href/', function (array $matches) {
+                    return "{$matches[0]}+'/index.html'";
+                }, $content);
+
                 $content = Str::replaceMatches('/href:([a-z]{1}),/', function (array $matches) {
                     return "href:'./'+{$matches[1]}+'/index.html',";
                 }, $content);
@@ -66,9 +70,10 @@ class Scormer
             }
 
             if ($file->getExtension() === 'html') {
+
                 $content = Str::replace(
-                    search: ['src&#34;:&#34;/', '&quot;/_astro'],
-                    replace: ['src&#34;:&#34;./', '&quot;../_astro'],
+                    search: ['src&#34;:&#34;/', '&quot;/_astro', '&quot;/images'],
+                    replace: ['src&#34;:&#34;./', '&quot;../_astro', Str::contains($file->getRelativePath(), '/') ? '&quot;../../images' : '&quot;../images'],
                     subject: File::get($file->getRealPath())
                 );
 
@@ -82,8 +87,8 @@ class Scormer
 
                 foreach ($items as $item) {
                     $content = Str::replace(
-                        search: $item,
-                        replace: $item.'index.html',
+                        search: "href=\"{$item}\"",
+                        replace: "href=\"{$item}index.html\"",
                         subject: $content
                     );
                 }

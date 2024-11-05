@@ -6,3 +6,4 @@
 composer.lock
 project-test
 scormer.phar
+.DS_Store

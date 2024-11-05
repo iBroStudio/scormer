@@ -2,12 +2,14 @@
 
 use App\Commands\GenerateCommand;
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Str;
 use Laravel\Prompts\Key;
 use Laravel\Prompts\Prompt;
+use Symfony\Component\DomCrawler\Crawler;
 
 use function Pest\Laravel\artisan;
 
-it('inspires artisans', function () {
+it('can generate a scorm', function () {
     $config = getcwd().'/project-test/.scorm';
     $package = getcwd().'/project-test/scorm/van_cleef_arpels_grand_module_perlee.zip';
 
@@ -59,4 +61,40 @@ it('inspires artisans', function () {
         ->toContain('organization=\'Van Cleef & Arpels\'')
         ->toContain('packageName=van_cleef_arpels_grand_module_perlee.zip')
         ->and($package)->toBeFile();
+});
+
+it('transforms paths', function () {
+    $content = Str::replace(
+        search: ['src&#34;:&#34;/', '&quot;/_astro', '&quot;/images'],
+        replace: ['src&#34;:&#34;./', '&quot;../_astro', '&quot;../images'],
+        subject: File::get(getcwd().'/project-test/htmltest.html')
+    );
+
+    $dom = new Crawler($content);
+
+    $items = array_unique($dom
+        ->filter('a')
+        ->each(function (Crawler $node): string {
+            return $node->attr('href');
+        }));
+
+    foreach ($items as $item) {
+        $content = Str::replace(
+            search: "href=\"{$item}\"",
+            replace: "href=\"{$item}index.html\"",
+            subject: $content
+        );
+    }
+
+    File::put(getcwd().'/project-test/htmltested.html', $content);
+});
+
+it('transforms js paths', function () {
+    $content = File::get(getcwd().'/project-test/jstest.js');
+
+    $content = Str::replaceMatches('/window\.location\.href=new URL\([a-z]{1},window\.location\.href\.replace\(.*\)\)\.href/', function (array $matches) {
+        return "{$matches[0]}+'/index.html'";
+    }, $content);
+
+    File::put(getcwd().'/project-test/jstested.js', $content);
 });
