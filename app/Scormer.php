@@ -72,8 +72,18 @@ class Scormer
             if ($file->getExtension() === 'html') {
 
                 $content = Str::replace(
-                    search: ['src&#34;:&#34;/', '&quot;/_astro', '&quot;/images'],
-                    replace: ['src&#34;:&#34;./', '&quot;../_astro', Str::contains($file->getRelativePath(), '/') ? '&quot;../../images' : '&quot;../images'],
+                    search: [
+                        'src&#34;:&#34;/',
+                        '&quot;/_astro',
+                        '&quot;/images',
+                        '<!--<script src="../scripts/scormRTE.js"></script>-->',
+                    ],
+                    replace: [
+                        'src&#34;:&#34;./',
+                        '&quot;../_astro',
+                        Str::contains($file->getRelativePath(), '/') ? '&quot;../../images' : '&quot;../images',
+                        '<script src="../scripts/scormRTE.js"></script>'
+                    ],
                     subject: File::get($file->getRealPath())
                 );
 
