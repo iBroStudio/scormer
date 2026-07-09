@@ -1,0 +1,10 @@
+version=1.2
+title='Under One Roof'
+identifier=jaeger-lecoultre-under-one-roof
+source=playground/dist
+destination=playground/scorms
+masteryScore=80
+startingPage=index.html
+organization='Jaeger LeCoultre'
+packageName=jaeger_lecoultre_under_one_roof.zip
+metadataDescription=

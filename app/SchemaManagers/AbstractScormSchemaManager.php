@@ -42,13 +42,18 @@ abstract class AbstractScormSchemaManager
         $files = File::allFiles($directory);
 
         foreach ($files as $file) {
-            $filesForSchema[] = [
+            $fileData =  [
                 'name' => 'file',
                 'attributes' => [
                     'href' => $file->getRelativePathname(),
                 ],
             ];
 
+            if ($file->getExtension() === 'js') {
+                //$fileData['attributes']['type'] = 'application/javascript';
+            }
+
+            $filesForSchema[] = $fileData;
         }
 
         return $filesForSchema;

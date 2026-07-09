@@ -10,6 +10,7 @@ use App\Exceptions\InvalidScormManifestSchemaException;
 use App\Exceptions\UnsupportedVersionException;
 use App\Scormer;
 use Dotenv\Dotenv;
+use IBroStudio\DataRepository\ValueObjects\DependenciesJsonFile;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\File;
@@ -68,7 +69,10 @@ class GenerateCommand extends Command
 
             $configDataClass = ScormVersions::from($config['version'])->getConfigDataClass();
 
-            return $configDataClass::from($config);
+            return $configDataClass::from([
+                ...$config,
+                'packageVersion' => DependenciesJsonFile::from($this->workingDirectory.'/package.json')->version()
+            ]);
         }
 
         $config = form()
@@ -193,7 +197,10 @@ class GenerateCommand extends Command
         }
 
         try {
-            return $configDataClass::from($config);
+            return $configDataClass::from([
+                ...$config,
+                'packageVersion' => DependenciesJsonFile::from($this->workingDirectory.'/package.json')->version()
+            ]);
         } catch (\TypeError $e) {
             error($e->getMessage());
         }
@@ -206,7 +213,7 @@ class GenerateCommand extends Command
         if (File::put(
             path: $this->workingDirectory.'/.scorm',
             contents: Arr::join(
-                collect($config->toArray())
+                collect($config->except('packageVersion')->toArray())
                     ->map(fn ($value, $key) => preg_match('/\s/', $value)
                             ? "$key='$value'"
                             : "$key=$value"

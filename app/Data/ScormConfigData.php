@@ -4,6 +4,7 @@ namespace App\Data;
 
 use App\Contracts\ScormConfig;
 use App\Enums\ScormVersions;
+use IBroStudio\DataRepository\ValueObjects\SemanticVersion;
 use Spatie\LaravelData\Data;
 
 class ScormConfigData extends Data implements ScormConfig
@@ -17,6 +18,7 @@ class ScormConfigData extends Data implements ScormConfig
         public int $masteryScore,
         public string $startingPage,
         public string $organization,
+        public SemanticVersion $packageVersion,
         public string $packageName,
         public ?string $metadataDescription,
     ) {}

@@ -11,7 +11,7 @@ use function Pest\Laravel\artisan;
 
 it('can generate a scorm', function () {
     $config = getcwd().'/project-test/.scorm';
-    $package = getcwd().'/project-test/scorm/van_cleef_arpels_grand_module_perlee.zip';
+    $package = getcwd().'/project-test/scorm/van_cleef_arpels_grand_module_perlee_0_0_1.zip';
 
     File::delete($config);
     File::delete($package);

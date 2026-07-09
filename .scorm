@@ -1,0 +1,10 @@
+version=1.2
+title='Flora'
+identifier=van-cleef-arpels-flora
+source=playground/dist
+destination=playground/scorms
+masteryScore=80
+startingPage=index.html
+organization='Van Cleef & Arpels'
+packageName=van_cleef_arpels_flora.zip
+metadataDescription=

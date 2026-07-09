@@ -1,0 +1,10 @@
+version=2004.3
+title='eVitara Module 5'
+identifier=suzuki-evitara-module-5
+source=playground/dist
+destination=playground/scorms
+masteryScore=1
+startingPage=index.html
+organization=Suzuki
+packageName=suzuki_evitara_module_5.zip
+metadataDescription=

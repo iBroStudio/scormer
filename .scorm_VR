@@ -1,0 +1,14 @@
+version=2004.4
+title='Spacebomb Metallic Musk'
+identifier=viktor&rolf-spacebomb-metallic-musk
+source=playground/dist
+destination=playground/scorms
+masteryScore=80
+startingPage=index.html
+organization=Viktor&Rolf
+packageName=viktor&rolf_spacebomb_metallic_musk.zip
+entryIdentifier=1
+catalogValue=Catalog
+lifeCycleVersion=1
+classification='educational objective'
+metadataDescription=

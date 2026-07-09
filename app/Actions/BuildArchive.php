@@ -17,15 +17,10 @@ class BuildArchive
         $archive = Str::of($config->destination)
             ->append(DIRECTORY_SEPARATOR)
             ->append($config->packageName)
-            ->whenContains(
-                needles: ['.zip'],
-                callback: function (Stringable $string) {
-                    return $string;
-                },
-                default: function (Stringable $string) {
-                    return $string->append('.zip');
-                }
-            )
+            ->chopEnd('.zip')
+            ->append('_')
+            ->append($config->packageVersion->underscored())
+            ->append('.zip')
             ->value();
 
         $zip = new ZipArchive;
